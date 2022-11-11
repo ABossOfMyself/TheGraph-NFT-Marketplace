@@ -1,4 +1,4 @@
-specVersion: 0.0.1
+specVersion: 0.0.4
 schema:
   file: ./schema.graphql
 dataSources:
@@ -6,11 +6,12 @@ dataSources:
     name: NFTMarketplace
     network: goerli
     source:
-      address: "0xED725114Fc45d922D3072b77CbCf34d804E17Dd4"
+      address: "0x42b8a0Ed54133bF99e2867629De9aF3723cE3633"
       abi: NFTMarketplace
+      startBlock: 7885377
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.5
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
         - NFTBought

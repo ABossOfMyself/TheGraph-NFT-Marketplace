@@ -1,55 +1,117 @@
-import { BigInt } from "@graphprotocol/graph-ts"
-import {
-  NFTMarketplace,
-  NFTBought,
-  NFTCancelled,
-  NFTListed
-} from "../generated/NFTMarketplace/NFTMarketplace"
-import { ExampleEntity } from "../generated/schema"
+import { Address, BigInt } from "@graphprotocol/graph-ts"
+import { NFTBought as NFTBoughtEvent, NFTCancelled as NFTCancelledEvent, NFTListed as NFTListedEvent } from "../generated/NFTMarketplace/NFTMarketplace"
+import { ItemListed, ItemBought, ItemCancelled, ActiveItem } from "../generated/schema"
 
-export function handleNFTBought(event: NFTBought): void {
-  // Entities can be loaded from the store using a string ID; this ID
-  // needs to be unique across all entities of the same type
-  let entity = ExampleEntity.load(event.transaction.from.toHex())
 
-  // Entities only exist after they have been saved to the store;
-  // `null` checks allow to create entities on demand
-  if (!entity) {
-    entity = new ExampleEntity(event.transaction.from.toHex())
 
-    // Entity fields can be set using simple assignments
-    entity.count = BigInt.fromI32(0)
+export function handleNFTListed(event: NFTListedEvent): void {
+
+  let itemListed = ItemListed.load(getIdFromEventParams(event.params.tokenId, event.params.NFTContractAddress))
+
+  let activeItem = ActiveItem.load(getIdFromEventParams(event.params.tokenId, event.params.NFTContractAddress))
+
+
+  if(!itemListed) {
+
+    itemListed = new ItemListed(getIdFromEventParams(event.params.tokenId, event.params.NFTContractAddress))
   }
 
-  // BigInt and BigDecimal math are supported
-  entity.count = entity.count + BigInt.fromI32(1)
 
-  // Entity fields can be set based on event parameters
-  entity.buyer = event.params.buyer
-  entity.NFTContractAddress = event.params.NFTContractAddress
+  if(!activeItem) {
 
-  // Entities can be written to the store with `.save()`
-  entity.save()
+    activeItem = new ActiveItem(getIdFromEventParams(event.params.tokenId, event.params.NFTContractAddress))
+  }
 
-  // Note: If a handler doesn't require existing field values, it is faster
-  // _not_ to load the entity from the store. Instead, create it fresh with
-  // `new Entity(...)`, set the fields that should be updated and save the
-  // entity back to the store. Fields that were not set or unset remain
-  // unchanged, allowing for partial updates to be applied.
 
-  // It is also possible to access smart contracts from mappings. For
-  // example, the contract that has emitted the event can be connected to
-  // with:
-  //
-  // let contract = Contract.bind(event.address)
-  //
-  // The following functions can then be called on this contract to access
-  // state variables and other data:
-  //
-  // - contract.getListing(...)
-  // - contract.getProceeds(...)
+  itemListed.seller = event.params.seller
+
+  itemListed.NFTContractAddress = event.params.NFTContractAddress
+
+  itemListed.tokenId = event.params.tokenId
+
+  itemListed.price = event.params.price
+
+
+  activeItem.seller = event.params.seller
+
+  activeItem.NFTContractAddress = event.params.NFTContractAddress
+
+  activeItem.tokenId = event.params.tokenId
+
+  activeItem.price = event.params.price
+
+
+  activeItem.buyer = Address.fromString("0x0000000000000000000000000000000000000000")
+
+
+  itemListed.save()
+
+  activeItem.save()
 }
 
-export function handleNFTCancelled(event: NFTCancelled): void {}
 
-export function handleNFTListed(event: NFTListed): void {}
+
+export function handleNFTBought(event: NFTBoughtEvent): void {
+
+  let itemBought = ItemBought.load(getIdFromEventParams(event.params.tokenId, event.params.NFTContractAddress))
+
+  let activeItem = ActiveItem.load(getIdFromEventParams(event.params.tokenId, event.params.NFTContractAddress))
+
+
+  if(!itemBought) {
+
+    itemBought = new ItemBought(getIdFromEventParams(event.params.tokenId, event.params.NFTContractAddress))
+  }
+
+
+  itemBought.buyer = event.params.buyer
+
+  itemBought.NFTContractAddress = event.params.NFTContractAddress
+
+  itemBought.tokenId = event.params.tokenId
+
+
+  activeItem!.buyer = event.params.buyer
+
+
+  itemBought.save()
+
+  activeItem!.save()
+}
+
+
+
+export function handleNFTCancelled(event: NFTCancelledEvent): void {
+
+  let itemCancelled = ItemCancelled.load(getIdFromEventParams(event.params.tokenId, event.params.NFTContractAddress))
+
+  let activeItem = ActiveItem.load(getIdFromEventParams(event.params.tokenId, event.params.NFTContractAddress))
+
+
+  if(!itemCancelled) {
+
+    itemCancelled = new ItemCancelled(getIdFromEventParams(event.params.tokenId, event.params.NFTContractAddress))
+  }
+
+
+  itemCancelled.seller = event.params.seller
+
+  itemCancelled.NFTContractAddress = event.params.NFTContractAddress
+
+  itemCancelled.tokenId = event.params.tokenId
+
+
+  activeItem!.buyer = Address.fromString("0x000000000000000000000000000000000000dEaD")
+
+
+  itemCancelled.save()
+
+  activeItem!.save()
+}
+
+
+
+function getIdFromEventParams(tokenId: BigInt, NFTContractAddress: Address): string {
+
+  return tokenId.toHexString() + NFTContractAddress.toHexString()
+}
